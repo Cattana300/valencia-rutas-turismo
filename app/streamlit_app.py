@@ -93,12 +93,28 @@ if st.sidebar.button("✨ Generar ruta"):
         # ------------------------------------------------------------------
         # 3) DIBUJAR RUTA EN EL MAPA
         # ------------------------------------------------------------------
-      
+        
+        itin_pd=pd.DataFrame(itin)
 
+        COLOR_MAP = {
+        "a":       [128, 128, 128],  # gris
+        "bus":         [255, 165,   0],  # naranja
+        "metro":       [  0,   0, 255],  # azul
+        }
+
+        TRANSPORT_MODES = {"bus", "metro"}
+        def pick_color(tipo: str):
+            first = tipo.split()[0].lower()
+            if first in TRANSPORT_MODES:
+                return COLOR_MAP[first]
+            # para cualquier otro 'tipo' (museo, iglesia, edificio, etc.)
+            return COLOR_MAP["a"]
+
+        itin_pd["color"] = itin_pd["tipo"].apply(pick_color)
         itin_coords = [
-            (p["lon"], p["lat"])
-            for p in itin
-            if p["lat"] is not None and p["lon"] is not None
+        (row.lon, row.lat)
+        for _, row in itin_pd.iterrows()
+        if pd.notnull(row.lat) and pd.notnull(row.lon)
         ]
         
         full_path = []
@@ -112,7 +128,7 @@ if st.sidebar.button("✨ Generar ruta"):
                 data=[{"path": full_path}],
                 get_path="path",
                 get_width=6,
-                get_color=[30, 144, 255],
+                get_color="color",
                 pickable=False,
             )
             layers.append(path_layer)
@@ -151,7 +167,7 @@ if show_monuments:
         data=gdf,
         get_position=["lon", "lat"],
         get_color=[255, 100, 100],
-        get_radius=30,
+        get_radius=20,
         pickable=True
     ))
 
@@ -186,7 +202,7 @@ if show_fonts:
         "ScatterplotLayer",
         data=gdf,
         get_position=["lon", "lat"],
-        get_color=[100, 255, 100],
+        get_color=[0, 255, 0],
         get_radius=10,
         pickable=True
     ))
