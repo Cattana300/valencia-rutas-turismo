@@ -75,20 +75,14 @@ def should_use_public_transport(origen, destino, modo_pt) -> Tuple[bool, str, fl
         time_tp, linea, modo = get_public_transport_time(origen, destino, m, return_line=True)
         if time_tp is not None:
             ahorro = time_walk_min - time_tp
-            st.write(f"""
-            **DEBUG PT**  
-            origen={origen}, destino={destino}  
-            time_walk={time_walk_min:.0f} m, time_tp={time_tp or -1:.0f} m, ahorro={ahorro:.0f} m  
-            línea={linea}, modo={modo}
-            """)
             mejores.append((ahorro, time_tp, linea, m))
 
     if mejores:
         ahorro, time_tp, linea, m = max(mejores, key=lambda x: x[0])
-        if ahorro >= 0:  # o el umbral que decidas
+        if ahorro > 5:  # o el umbral que decidas
             return True, f"{m} línea {linea}", time_tp
 
-    return False, "A pie", dist_walk
+    return False, "A pie", time_walk_min
 
 
 
@@ -247,11 +241,9 @@ def generar_ruta(
             destino = (poi.geometry.y, poi.geometry.x)
 
             # evaluamos transporte público
-            usar_tp, modo_tp, dist_tramo = should_use_public_transport(
+            usar_tp, modo_tp, tramo_min = should_use_public_transport(
                 origen, destino, transporte
             )
-            # si no conviene, dist_tramo será distancia a pie
-            tramo_min = walking_time_minutes(dist_tramo)
 
             if time_budget >= tramo_min + VISIT_DURATION_MIN:
                 elegido = poi
